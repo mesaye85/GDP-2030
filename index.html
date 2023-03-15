@@ -1,24 +1,13 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>GDP Prediction App</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  </head>
-  <body>
-    <div class="container mt-5">
-      <h1 class="text-center mb-5">GDP Prediction App</h1>
-      <div class="row">
-        <div class="col-sm-6 offset-sm-3">
-          <form action="/predict" method="post" class="form-group">
-            <div class="form-group">
-              <label for="growth_rate">Growth Rate:</label>
-              <input type="text" id="growth_rate" name="growth_rate" class="form-control">
-            </div>
-            <input type="submit" value="Predict" class="btn btn-primary btn-block mt-3">
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future GDP Prediction</title>
+</head>
+<body>
+    <h1>Future GDP Prediction</h1>
+    <img src="data:image/png;base64,{{ img_base64 }}" alt="Future GDP Plot">
+</body>
 </html>
