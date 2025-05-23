@@ -1,4 +1,3 @@
-Here's an example of what a README file for your app could look like:
 
 GDP Prediction App
 A web app that predicts the future GDPs of countries using machine learning. The app uses data from the World Bank API and makes predictions using a random forest regressor from scikit-learn. The user can input a growth rate to see how it affects the predictions.
