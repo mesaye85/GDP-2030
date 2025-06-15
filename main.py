@@ -46,6 +46,12 @@ app = Flask(__name__)
 MODEL_PATH = 'models/gdp_forecast_model.pkl'
 SCALER_PATH = 'models/gdp_forecast_scaler.pkl'
 
+# Central list of expected features for the model
+EXPECTED_COLUMNS = [
+    'GDP_growth', 'GDP_pcap', 'GNI', 'GDP_pcap_growth', 'GNI_pcap',
+    'growth_ma_5', 'growth_volatility', 'hist_growth_mean', 'hist_growth_std'
+]
+
 
 def load_model():
     """Load the trained model and scaler."""
@@ -65,10 +71,7 @@ def load_model():
                 logger.warning("Using dummy model and scaler for compatibility.")
 
                 # Create sample data with expected features
-                expected_columns = [
-                    'GDP_growth', 'GDP_pcap', 'GNI', 'GDP_pcap_growth', 'GNI_pcap',
-                    'growth_ma_5', 'growth_volatility', 'hist_growth_mean', 'hist_growth_std'
-                ]
+                expected_columns = EXPECTED_COLUMNS
 
                 sample_features = pd.DataFrame({
                     col: [2.5 if 'growth' in col else 65000] for col in expected_columns
@@ -223,11 +226,9 @@ def prepare_forecast_features(data):
             features_dict['growth_ma_5'] = 2.5
             features_dict['growth_volatility'] = 0.5
 
+
         # Create DataFrame with only the expected columns in the correct order
-        expected_columns = [
-            'GDP_growth', 'GDP_pcap', 'GNI', 'GDP_pcap_growth', 'GNI_pcap',
-            'growth_ma_5', 'growth_volatility', 'hist_growth_mean', 'hist_growth_std'
-        ]
+        expected_columns = EXPECTED_COLUMNS
 
         # Create DataFrame with only the expected columns in the correct order
         features = pd.DataFrame(columns=expected_columns)
@@ -459,7 +460,7 @@ if __name__ == '__main__':
     os.makedirs('models', exist_ok=True)
 
     # Start the Flask application
-    # Use port 5001 to avoid conflict with AirPlay Receiver on macOS
-    port = 5001
+    # Use PORT environment variable or default to 5001
+    port = int(os.getenv("PORT", 5001))
     logger.info(f"Starting Flask application on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
