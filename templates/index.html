@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GDP Projection</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --surface: #fcfcfb;
+      --page: #f9f9f7;
+      --ink: #0b0b0b;
+      --ink-2: #52514e;
+      --muted: #898781;
+      --grid: #e1e0d9;
+      --axis: #c3c2b7;
+      --border: rgba(11, 11, 11, 0.10);
+      --series: #2a78d6;
+      --error: #d03b3b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --surface: #1a1a19;
+        --page: #0d0d0d;
+        --ink: #f0efec;
+        --ink-2: #c3c2b7;
+        --muted: #898781;
+        --grid: #2c2c2a;
+        --axis: #383835;
+        --border: rgba(255, 255, 255, 0.10);
+        --series: #3987e5;
+        --error: #e66767;
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --surface: #1a1a19;
+      --page: #0d0d0d;
+      --ink: #f0efec;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --series: #3987e5;
+      --error: #e66767;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    h2 { font-size: 1.05rem; margin: 28px 0 8px; }
+    p { margin: 0 0 12px; }
+    .lede, .note, figcaption { color: var(--ink-2); }
+    .note { font-size: 0.875rem; }
+    form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 20px 0; }
+    label { display: flex; flex-direction: column; font-size: 0.875rem; color: var(--ink-2); gap: 4px; }
+    input {
+      font: inherit; color: var(--ink); background: var(--surface);
+      border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; width: 9rem;
+    }
+    button {
+      font: inherit; padding: 7px 16px; border-radius: 6px; border: 0;
+      background: var(--series); color: #fff; cursor: pointer;
+    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .error { border-color: var(--error); }
+    .error strong { color: var(--error); }
+    .headline { font-size: 1.6rem; font-weight: 600; margin: 4px 0; }
+    figure { margin: 16px 0 0; }
+    svg { display: block; width: 100%; height: auto; }
+    svg .grid { stroke: var(--grid); stroke-width: 1; }
+    svg .axis { stroke: var(--axis); stroke-width: 1; }
+    svg .dashed { stroke-dasharray: 3 3; }
+    svg .tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    svg .band { fill: var(--series); fill-opacity: 0.16; stroke: none; }
+    svg .hist, svg .proj { fill: none; stroke-width: 2; stroke-linejoin: round; }
+    svg .hist { stroke: var(--ink-2); }
+    svg .proj { stroke: var(--series); }
+    svg .hit { fill: transparent; }
+    svg .pt { fill: var(--surface); stroke: var(--series); stroke-width: 2; }
+    svg .pt.imf { fill: var(--series); }
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.8rem; color: var(--ink-2); margin-top: 6px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { display: inline-block; width: 16px; height: 2px; background: var(--ink-2); }
+    .swatch.proj { background: var(--series); }
+    .swatch.band { height: 10px; background: var(--series); opacity: 0.18; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--series); display: inline-block; }
+    .dot.filled { background: var(--series); }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+    th:first-child, td:first-child, th:nth-child(3), td:nth-child(3) { text-align: left; }
+    th { color: var(--ink-2); font-weight: 600; }
+    ul { padding-left: 20px; margin: 0 0 12px; }
+    code { font-size: 0.85em; }
+    a { color: var(--series); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Real GDP projection</h1>
+  <p class="lede">Extrapolates a country's real GDP (constant 2015 US$) from the latest World Bank level, using IMF
+    WEO growth forecasts where they exist and the country's trailing 10-year average growth after that.</p>
+
+  <form method="get" action="/">
+    <label>Country (ISO3)
+      <input name="country" value="{{ country }}" placeholder="USA" maxlength="3" required
+             pattern="[A-Za-z]{3}" autocomplete="off">
+    </label>
+    <label>Target year
+      <input name="year" type="number" value="{{ year }}" max="{{ max_year }}" required>
+    </label>
+    <button type="submit">Project</button>
+  </form>
+
+  {% if error %}
+  <div class="card error" role="alert"><strong>Could not project:</strong> {{ error }}</div>
+  {% endif %}
+
+  {% if result %}
+  {% set r = result %}
+  <div class="card">
+    <p class="note">{{ r.country_name }} ({{ r.country }}), {{ r.target_year }}, {{ r.units }}</p>
+    <p class="headline">{{ format_usd(r.projected_value) }}</p>
+    <p class="note">Range {{ format_usd(r.band.low) }} to {{ format_usd(r.band.high) }}: {{ r.band.label }}.
+      Starts from {{ format_usd(r.base_value) }} in {{ r.base_year }}.</p>
+    {% for n in r.notes %}<p class="note">{{ n }}</p>{% endfor %}
+
+    {% if chart %}
+    {% set c = chart %}
+    <figure>
+      <svg viewBox="0 0 {{ c.width }} {{ c.height }}" role="img"
+           aria-label="Real GDP for {{ r.country }}: World Bank history to {{ r.base_year }}, projection to {{ r.target_year }} with band">
+        {% for t in c.y_ticks %}
+        <line class="grid" x1="{{ c.plot.left }}" x2="{{ c.plot.right }}" y1="{{ t.y }}" y2="{{ t.y }}"/>
+        <text class="tick" x="{{ c.plot.left - 8 }}" y="{{ t.y }}" dy="0.32em" text-anchor="end">{{ t.label }}</text>
+        {% endfor %}
+        <line class="axis" x1="{{ c.plot.left }}" x2="{{ c.plot.right }}" y1="{{ c.plot.bottom }}" y2="{{ c.plot.bottom }}"/>
+        {% for t in c.x_ticks %}
+        <text class="tick" x="{{ t.x }}" y="{{ c.plot.bottom + 20 }}" text-anchor="middle">{{ t.label }}</text>
+        {% endfor %}
+        <line class="axis dashed" x1="{{ c.base_x }}" x2="{{ c.base_x }}" y1="{{ c.plot.top }}" y2="{{ c.plot.bottom }}"/>
+        <polygon class="band" points="{{ c.band }}"/>
+        <polyline class="hist" points="{{ c.history }}"/>
+        <polyline class="proj" points="{{ c.central }}"/>
+        {% for p in c.history_points %}
+        <circle class="hit" cx="{{ p.x }}" cy="{{ p.y }}" r="8"><title>{{ p.title }}</title></circle>
+        {% endfor %}
+        {% for p in c.points %}
+        <circle class="pt{{ ' imf' if p.imf else '' }}" cx="{{ p.x }}" cy="{{ p.y }}" r="4"><title>{{ p.title }}</title></circle>
+        {% endfor %}
+      </svg>
+      <figcaption class="legend">
+        <span><i class="swatch"></i>World Bank history</span>
+        <span><i class="swatch proj"></i>Projection</span>
+        <span><i class="dot filled"></i>IMF forecast year</span>
+        <span><i class="dot"></i>Trend year</span>
+        <span><i class="swatch band"></i>Band (past growth volatility)</span>
+      </figcaption>
+    </figure>
+    {% endif %}
+  </div>
+
+  <h2>Year by year</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Year</th><th>Growth %</th><th>Source</th><th>Projected</th><th>Low</th><th>High</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>{{ r.base_year }}</td><td></td><td>World Bank actual</td><td>{{ format_usd(r.base_value) }}</td><td></td><td></td></tr>
+        {% for p in r.path %}
+        <tr>
+          <td>{{ p.year }}</td>
+          <td>{{ '%.2f' % p.growth_rate }}</td>
+          <td>{{ 'IMF WEO' if p.source == 'imf' else 'Trend' }}</td>
+          <td>{{ format_usd(p.value) }}</td>
+          <td>{{ format_usd(p.low) }}</td>
+          <td>{{ format_usd(p.high) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Method and sources</h2>
+  <p class="note">{{ r.method }}</p>
+  <p class="note">Trend: mean {{ '%.2f' % r.trend.mean_growth }}%, standard deviation {{ '%.2f' % r.trend.std_growth }}
+    points, from {{ r.trend.observations }} years ({{ r.trend.from_year }}-{{ r.trend.to_year }}).</p>
+  <ul class="note">
+    <li>Level: <a href="{{ r.sources.level.url }}">World Bank <code>{{ r.sources.level.indicator }}</code></a></li>
+    <li>Growth history: <a href="{{ r.sources.history_growth.url }}">World Bank <code>{{ r.sources.history_growth.indicator }}</code></a></li>
+    <li>Forecast growth: <a href="{{ r.sources.forecast_growth.url }}">IMF DataMapper <code>{{ r.sources.forecast_growth.indicator }}</code></a></li>
+  </ul>
+  {% endif %}
+
+  <p class="note">This is an extrapolation, not an economic model. JSON: <code>/predict?country_code=USA&amp;year=2030</code>.</p>
+</main>
+</body>
+</html>
